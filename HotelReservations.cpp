@@ -2,21 +2,18 @@
 #include <vector>
 #include <string>
 #include <tuple>
-
 #include <queue>
 #include <bitset>
-
-// ...existing code...
 
 class Hotel
 {
 private:
     int size;
     static const int MaxDays = 366;
-    // For Book/Book_V2
+    // Using a brute-force approach with a 2D vector for occupancy tracking
     std::vector<std::vector<bool>> occupied_bf;
-    // For Book_V3
     using Bitset = std::bitset<MaxDays>;
+    // Using a bitset for occupancy tracking in each room
     std::vector<Bitset> occupied_bs;
     std::vector<int> utilization;
 
@@ -41,8 +38,8 @@ public:
           occupied_bf(s, std::vector<bool>(MaxDays, false)),
           occupied_bs(s, Bitset()),
           utilization(s, 0) {}
-    // Book_V3: Most optimal approach using bitsets and priority queue
-    // This method finds the most utilized room that is available for the requested period
+    // Basic booking function: Book
+    // Uses a brute-force approach to find the most utilized room
 
     std::string Book(int start, int end)
     {
@@ -147,7 +144,8 @@ public:
         }
         return "Accept";
     }
-
+    // Book_V3: Most optimal approach using bitsets and priority queue
+    // This method finds the most utilized room that is available for the requested period
     std::string Book_V3(int start, int end)
     {
         if (start < 0 || end >= MaxDays || start > end)
