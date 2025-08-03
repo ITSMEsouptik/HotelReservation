@@ -31,11 +31,36 @@
  - Standard C++ library (no external dependencies required).
  - C++11 or later for `std::tuple` and other features.
 
- ## Assumptions
 
- - When multiple rooms are available for a booking, the program assigns the booking to the room with the most days already booked (most utilized). This heuristic aims to leave less utilized rooms available for potentially longer future stays, though the problem specifies not to optimize for future requests. In case of ties, the lowest room number is chosen.
- - The maximum planning period is set to 366 days (accounting for a leap year) to handle test cases within a reasonable range.
- - Invalid bookings (e.g., start > end, or dates outside the planning period [0, 365]) are declined.
+## Room Assignment Approach
+
+
+Brute Force Approach (Book)
+
+When multiple rooms are available for a booking, the program assigns the booking to the room that is already booked for the most days (the most utilized room). This is done by counting the number of days each available room is already occupied and selecting the one with the highest count. If there is a tie, the room with the lowest room number is chosen.
+
+**Time Complexity**
+- For each booking, the algorithm checks every room and every day in the booking range to find available rooms, resulting in O(rooms × days) per booking.
+- For each available room, it counts the total number of occupied days (O(days)), to select the most utilized room.
+- Overall, for N bookings, the worst-case time complexity is O(N × rooms × days).
+
+Optimized Heap-Based Approach (Book_V2)
+
+The optimized approach uses a max-heap (priority queue) to efficiently select the most utilized available room. For each booking:
+
+- All available rooms are pushed into a max-heap as pairs (utilization, -room number), so the room with the highest utilization (and lowest room number in case of ties) is chosen efficiently.
+- This reduces the time to select the room among free rooms to O(freeRooms × log(freeRooms)) per booking.
+
+**Time Complexity**
+- For each booking, finding free rooms is O(rooms × daysInBooking).
+- Selecting the most utilized room among free rooms is O(freeRooms × log(freeRooms)).
+- Overall, for N bookings, the worst-case time complexity is O(N × rooms × daysInBooking + N × freeRooms × log(freeRooms)).
+
+**Rationale:**
+- This heuristic helps to leave less utilized rooms as open as possible for future bookings, especially for longer stays, by concentrating bookings in already-busy rooms. This reduces fragmentation of availability across rooms and maximizes flexibility for future reservations.
+- The approach is simple and efficient for the problem size, but more advanced data structures (like interval trees or bitsets) could be used for larger datasets.
+
+The maximum planning period is set to 366 days (accounting for a leap year) to handle test cases within a reasonable range. Invalid bookings (e.g., start > end, or dates outside the planning period [0, 365]) are declined.
 
  ## Test Cases
 

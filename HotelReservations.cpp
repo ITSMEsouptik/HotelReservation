@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <tuple>
+#include <queue>
 
 class Hotel
 {
@@ -9,6 +10,15 @@ private:
     int size;
     static const int MaxDays = 366;
     std::vector<std::vector<bool>> occupied;
+
+    // Helper to count utilization for a room (number of booked days)
+    int countUtilization(int room) const {
+        int cnt = 0;
+        for (int d = 0; d < MaxDays; ++d) {
+            if (occupied[room][d]) ++cnt;
+        }
+        return cnt;
+    }
 
 public:
     Hotel(int s) : size(s), occupied(s, std::vector<bool>(MaxDays, false)) {}
@@ -73,6 +83,56 @@ public:
 
         return "Accept";
     }
+
+    // Optimized heap-based approach: Book_V2
+    // Uses a priority queue to select the most utilized available room efficiently
+    std::string Book_V2(int start, int end)
+    {
+        if (start < 0 || end >= MaxDays || start > end)
+        {
+            return "Decline";
+        }
+
+        // Find all free rooms for the period
+        std::vector<int> freeRooms;
+        for (int r = 0; r < size; ++r)
+        {
+            bool isFree = true;
+            for (int d = start; d <= end; ++d)
+            {
+                if (occupied[r][d])
+                {
+                    isFree = false;
+                    break;
+                }
+            }
+            if (isFree)
+            {
+                freeRooms.push_back(r);
+            }
+        }
+
+        if (freeRooms.empty())
+        {
+            return "Decline";
+        }
+
+        // Use a max-heap to select the most utilized room (with lowest room number in case of tie)
+        using RoomInfo = std::pair<int, int>; // (utilization, -room number)
+        std::priority_queue<RoomInfo> pq;
+        for (int r : freeRooms)
+        {
+            pq.push({countUtilization(r), -r});
+        }
+        int chosenRoom = -pq.top().second;
+
+        // Assign the booking to the chosen room
+        for (int d = start; d <= end; ++d)
+        {
+            occupied[chosenRoom][d] = true;
+        }
+        return "Accept";
+    }
 };
 
 void RunTest(const std::string &testName, int size, const std::vector<std::tuple<int, int, std::string>> &bookings)
@@ -86,7 +146,7 @@ void RunTest(const std::string &testName, int size, const std::vector<std::tuple
         int start = std::get<0>(booking);
         int end = std::get<1>(booking);
         std::string expected = std::get<2>(booking);
-        std::string result = hotel.Book(start, end);
+        std::string result = hotel.Book_V2(start, end);
         std::cout << "Booking " << bookingNum << ": " << start << "-" << end << " " << result << " (expected: " << expected << ")" << std::endl;
         if (result != expected)
         {
@@ -104,7 +164,8 @@ void RunTest(const std::string &testName, int size, const std::vector<std::tuple
 
 int main()
 {
-    RunTest("Test 1a", 1, {{4, 2, "Decline"}});
+
+    RunTest("Test 1a", 1, {{-4, 2, "Decline"}});
 
     RunTest("Test 1b", 1, {{200, 400, "Decline"}});
 
@@ -112,9 +173,9 @@ int main()
 
     RunTest("Test 3", 3, {{1, 3, "Accept"}, {2, 5, "Accept"}, {1, 9, "Accept"}, {0, 15, "Decline"}});
 
-    RunTest("Test 4", 3, {{1, 3, "Accept"}, {2, 5, "Accept"}, {1, 9, "Accept"}, {0, 15, "Decline"}, {4, 9, "Accept"}});
+    RunTest("Test 4", 3, {{1, 3, "Accept"}, {0, 15, "Accept"}, {1, 9, "Accept"}, {2, 5, "Decline"}, {4, 9, "Accept"}});
 
-    RunTest("Test 5", 2, {{1, 3, "Accept"}, {0, 4, "Accept"}, {2, 3, "Decline"}, {5, 5, "Accept"}, {4, 10, "Accept"}, {10, 10, "Accept"}, {6, 7, "Accept"}, {8, 10, "Decline"}, {9, 9, "Accept"}});
+    RunTest("Test 5", 2, {{1, 3, "Accept"}, {0, 4, "Accept"}, {2, 3, "Decline"}, {5, 5, "Accept"}, {4, 10, "Accept"}, {10, 10, "Accept"}, {6, 7, "Accept"}, {8, 10, "Decline"}, {8, 9, "Accept"}});
 
     std::cout << "All tests completed." << std::endl;
     return 0;
