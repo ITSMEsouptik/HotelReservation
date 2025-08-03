@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -5,18 +6,41 @@
 #include <queue>
 #include <bitset>
 
+/**
+ * @class Hotel
+ * @brief Manages hotel room bookings using multiple algorithms for comparison.
+ *
+ * Supports three booking strategies:
+ *   - Book: Brute-force approach using a 2D vector.
+ *   - Book_V2: Heap-based approach using a 2D vector.
+ *   - Book_V3: Bitset + utilization array + heap for optimal performance.
+ */
 class Hotel
 {
 private:
-    int size;
-    static const int MaxDays = 366;
-    // Using a brute-force approach with a 2D vector for occupancy tracking
+    int size; ///< Number of rooms in the hotel
+    static const int MaxDays = 366; ///< Maximum number of days (0-based, e.g., 0-365)
+    /**
+     * @brief Occupancy tracking for Book and Book_V2 (brute-force/heap-based)
+     * occupied_bf[room][day] == true if room is booked on that day
+     */
     std::vector<std::vector<bool>> occupied_bf;
     using Bitset = std::bitset<MaxDays>;
-    // Using a bitset for occupancy tracking in each room
+    /**
+     * @brief Occupancy tracking for Book_V3 (bitset-based)
+     * occupied_bs[room].test(day) == true if room is booked on that day
+     */
     std::vector<Bitset> occupied_bs;
+    /**
+     * @brief Utilization array for Book_V3 (number of booked days per room)
+     */
     std::vector<int> utilization;
-    // Count utilization for a room by searching through the occupied days
+
+    /**
+     * @brief Counts the number of booked days for a room (brute-force/heap-based)
+     * @param room Room index
+     * @return Number of days the room is booked
+     */
     int countUtilization_bf(int room) const
     {
         int count = 0;
@@ -27,20 +51,34 @@ private:
         }
         return count;
     }
-    // Count utilization of a room at O(1) time
+    /**
+     * @brief Returns the number of booked days for a room (bitset-based)
+     * @param room Room index
+     * @return Number of days the room is booked
+     */
     int countUtilization_bs(int room) const
     {
         return utilization[room];
     }
 
 public:
+    /**
+     * @brief Constructs a Hotel with the given number of rooms.
+     * @param s Number of rooms
+     */
     Hotel(int s)
         : size(s),
           occupied_bf(s, std::vector<bool>(MaxDays, false)),
           occupied_bs(s, Bitset()),
           utilization(s, 0) {}
-    // Basic booking function: Book
-    // Uses a brute-force approach to find the most utilized room
+
+    /**
+     * @brief Brute-force booking: finds the most utilized available room for the requested period.
+     *
+     * @param start Start day (inclusive)
+     * @param end End day (inclusive)
+     * @return "Accept" if booking is successful, "Decline" otherwise
+     */
 
     std::string Book(int start, int end)
     {
@@ -73,7 +111,7 @@ public:
             return "Decline";
         }
 
-        // Assumption: Assign to the most utilized room to leave less utilized rooms for future stays
+        // Assign to the most utilized room (leave less utilized rooms for future stays)
         // In case of ties, choose the lowest room number
         int maxOccupiedCount = -1;
         int chosenRoom = -1;
@@ -96,8 +134,13 @@ public:
         return "Accept";
     }
 
-    // Optimized heap-based approach: Book_V2
-    // Uses a priority queue to select the most utilized available room efficiently
+    /**
+     * @brief Heap-based booking: selects the most utilized available room using a max-heap.
+     *
+     * @param start Start day (inclusive)
+     * @param end End day (inclusive)
+     * @return "Accept" if booking is successful, "Decline" otherwise
+     */
     std::string Book_V2(int start, int end)
     {
         if (start < 0 || end >= MaxDays || start > end)
@@ -129,7 +172,7 @@ public:
             return "Decline";
         }
 
-        // Use a max-heap to select the most utilized room (with lowest room number in case of tie)
+        // Use a max-heap to select the most utilized room (lowest room number in case of tie)
         using RoomInfo = std::pair<int, int>; // (utilization, -room number)
         std::priority_queue<RoomInfo> pq;
         for (int r : freeRooms)
@@ -145,8 +188,15 @@ public:
         }
         return "Accept";
     }
-    // Book_V3: Most optimal approach using bitsets and priority queue
-    // This method finds the most utilized room that is available for the requested period
+    /**
+     * @brief Bitset + heap + utilization array: most optimal booking approach.
+     *
+     * Uses bitsets for fast occupancy checks, a utilization array for O(1) lookup, and a heap for efficient selection.
+     *
+     * @param start Start day (inclusive)
+     * @param end End day (inclusive)
+     * @return "Accept" if booking is successful, "Decline" otherwise
+     */
     std::string Book_V3(int start, int end)
     {
         if (start < 0 || end >= MaxDays || start > end)
