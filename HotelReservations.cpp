@@ -2,26 +2,47 @@
 #include <vector>
 #include <string>
 #include <tuple>
+
 #include <queue>
+#include <bitset>
+
+// ...existing code...
 
 class Hotel
 {
 private:
     int size;
     static const int MaxDays = 366;
-    std::vector<std::vector<bool>> occupied;
+    // For Book/Book_V2
+    std::vector<std::vector<bool>> occupied_bf;
+    // For Book_V3
+    using Bitset = std::bitset<MaxDays>;
+    std::vector<Bitset> occupied_bs;
+    std::vector<int> utilization;
 
-    // Helper to count utilization for a room (number of booked days)
-    int countUtilization(int room) const {
-        int cnt = 0;
-        for (int d = 0; d < MaxDays; ++d) {
-            if (occupied[room][d]) ++cnt;
+    int countUtilization_bf(int room) const
+    {
+        int count = 0;
+        for (int d = 0; d < MaxDays; ++d)
+        {
+            if (occupied_bf[room][d])
+                ++count;
         }
-        return cnt;
+        return count;
+    }
+    int countUtilization_bs(int room) const
+    {
+        return utilization[room];
     }
 
 public:
-    Hotel(int s) : size(s), occupied(s, std::vector<bool>(MaxDays, false)) {}
+    Hotel(int s)
+        : size(s),
+          occupied_bf(s, std::vector<bool>(MaxDays, false)),
+          occupied_bs(s, Bitset()),
+          utilization(s, 0) {}
+    // Book_V3: Most optimal approach using bitsets and priority queue
+    // This method finds the most utilized room that is available for the requested period
 
     std::string Book(int start, int end)
     {
@@ -37,7 +58,7 @@ public:
             bool isFree = true;
             for (int d = start; d <= end; ++d)
             {
-                if (occupied[r][d])
+                if (occupied_bf[r][d])
                 {
                     isFree = false;
                     break;
@@ -60,14 +81,7 @@ public:
         int chosenRoom = -1;
         for (int r : freeRooms)
         {
-            int count = 0;
-            for (int d = 0; d < MaxDays; ++d)
-            {
-                if (occupied[r][d])
-                {
-                    ++count;
-                }
-            }
+            int count = countUtilization_bf(r);
             if (count > maxOccupiedCount || (count == maxOccupiedCount && (chosenRoom == -1 || r < chosenRoom)))
             {
                 maxOccupiedCount = count;
@@ -78,7 +92,7 @@ public:
         // Assign the booking to the chosen room
         for (int d = start; d <= end; ++d)
         {
-            occupied[chosenRoom][d] = true;
+            occupied_bf[chosenRoom][d] = true;
         }
 
         return "Accept";
@@ -100,7 +114,7 @@ public:
             bool isFree = true;
             for (int d = start; d <= end; ++d)
             {
-                if (occupied[r][d])
+                if (occupied_bf[r][d])
                 {
                     isFree = false;
                     break;
@@ -122,15 +136,56 @@ public:
         std::priority_queue<RoomInfo> pq;
         for (int r : freeRooms)
         {
-            pq.push({countUtilization(r), -r});
+            pq.push({countUtilization_bf(r), -r});
         }
         int chosenRoom = -pq.top().second;
 
         // Assign the booking to the chosen room
         for (int d = start; d <= end; ++d)
         {
-            occupied[chosenRoom][d] = true;
+            occupied_bf[chosenRoom][d] = true;
         }
+        return "Accept";
+    }
+
+    std::string Book_V3(int start, int end)
+    {
+        if (start < 0 || end >= MaxDays || start > end)
+            return "Decline";
+
+        std::vector<int> freeRooms;
+        for (int r = 0; r < size; ++r)
+        {
+            bool isFree = true;
+            for (int d = start; d <= end; ++d)
+            {
+                if (occupied_bs[r].test(d))
+                {
+                    isFree = false;
+                    break;
+                }
+            }
+            if (isFree)
+                freeRooms.push_back(r);
+        }
+        if (freeRooms.empty())
+            return "Decline";
+
+        // Use a max-heap to select the most utilized room (lowest room number in case of tie)
+        using RoomInfo = std::pair<int, int>; // (utilization, -room number)
+        std::priority_queue<RoomInfo> pq;
+        for (int r : freeRooms)
+        {
+            pq.push({utilization[r], -r});
+        }
+        int chosenRoom = -pq.top().second;
+
+        // Assign the booking
+        for (int d = start; d <= end; ++d)
+        {
+            occupied_bs[chosenRoom].set(d);
+        }
+        utilization[chosenRoom] += (end - start + 1);
         return "Accept";
     }
 };
@@ -146,7 +201,7 @@ void RunTest(const std::string &testName, int size, const std::vector<std::tuple
         int start = std::get<0>(booking);
         int end = std::get<1>(booking);
         std::string expected = std::get<2>(booking);
-        std::string result = hotel.Book_V2(start, end);
+        std::string result = hotel.Book_V3(start, end);
         std::cout << "Booking " << bookingNum << ": " << start << "-" << end << " " << result << " (expected: " << expected << ")" << std::endl;
         if (result != expected)
         {

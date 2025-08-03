@@ -1,3 +1,45 @@
+# Hotel Reservation System Approaches
+
+This project implements and benchmarks three approaches for the dynamic hotel room booking problem:
+
+## 1. Book (Brute-force)
+- Uses a 2D vector<bool> to track occupancy for each room and day.
+- For each booking, checks every room and every day in the requested range.
+- Counts utilization by scanning all days for each free room.
+- **Time Complexity:** O(rooms × days) per booking.
+
+## 2. Book_V2 (Heap-based)
+- Also uses a 2D vector<bool> for occupancy.
+- Uses a max-heap to efficiently select the most utilized free room.
+- Still scans all days for availability and utilization.
+- **Time Complexity:** O(rooms × days) per booking (slightly better in practice, but not asymptotically).
+
+## 3. Book_V3 (Bitset + Utilization Array)
+- Uses a std::bitset for each room to track occupancy, allowing O(1) checks for any day.
+- Maintains a utilization array for each room, updated only when a booking is made.
+- For each booking:
+  - Checks each room for availability in the requested range using bitset.
+  - Selects the most utilized free room using the utilization array (O(1) lookup).
+  - Updates occupancy and utilization in O(daysInBooking) time.
+- **Time Complexity:**
+  - O(rooms) for free room search (since bitset check is O(1) per day).
+  - O(1) for utilization lookup.
+  - O(daysInBooking) for update.
+- **True asymptotic improvement** over Book and Book_V2.
+
+---
+
+### Summary Table
+
+| Approach   | Data Structure         | Free Room Search | Utilization Lookup | Update Booking      | Overall Complexity         |
+|------------|-----------------------|------------------|--------------------|---------------------|---------------------------|
+| Book       | vector<vector<bool>>  | O(rooms × days)  | O(days)            | O(days)             | O(rooms × days)           |
+| Book_V2    | vector<vector<bool>>  | O(rooms × days)  | O(days)            | O(days)             | O(rooms × days)           |
+| Book_V3    | bitset + array        | O(rooms)         | O(1)               | O(daysInBooking)    | O(rooms + daysInBooking)  |
+
+---
+
+**Book_V3 is recommended for large-scale or performance-critical scenarios.**
  This project implements a hotel reservation system in C++ as per the specifications provided in the "Hotel Reservations" problem.
 
  ## Compilation Instructions
