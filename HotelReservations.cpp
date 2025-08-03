@@ -16,7 +16,7 @@ private:
     // Using a bitset for occupancy tracking in each room
     std::vector<Bitset> occupied_bs;
     std::vector<int> utilization;
-
+    // Count utilization for a room by searching through the occupied days
     int countUtilization_bf(int room) const
     {
         int count = 0;
@@ -27,6 +27,7 @@ private:
         }
         return count;
     }
+    // Count utilization of a room at O(1) time
     int countUtilization_bs(int room) const
     {
         return utilization[room];
